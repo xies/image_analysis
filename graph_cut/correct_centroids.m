@@ -3,10 +3,14 @@ function cellsi = correct_centroids(cellsi, energy, centroids)
 %as to fit the cells to their centroids.
 
 repeat = 1;
+
+initial = cellsi;
+
 while repeat
     repeat = 0;
     cellsinv = ~cellsi;
     
+    % regions keeps track of object label
     regions = bwlabel(cellsinv, 4);
     
     % Keep track of which one is the "background."
@@ -15,15 +19,22 @@ while repeat
     
     centroid_track = zeros(1, length(unique(regions)) - 1);
     
-    for centroid=centroids'
+    % Go thorugh every given centroid and put each centroid in a region in
+    % the initial labelled image
+    for centroid = centroids'
+        % centroid_track keeps track of how many centroids fell into a single
+        % region
         cellnum = regions(round(centroid(1)), round(centroid(2)));
         centroid_track(cellnum) = centroid_track(cellnum) + 1;
         count = length(regions(regions == cellnum));
+        % @TODO define background as the region with most centroids -
+        % need to fix!
         if count > background_count
             background_count = count;
             background = cellnum;
         end
     end
+    
     original = cellsi;
     for region=unique(regions)'
         if region > 0
@@ -41,7 +52,7 @@ while repeat
                     % @TODO we need a way to deal with this.
                 else
                     % Split!
-                    cellsi = correct_centroids_split(cellsi, energy, centroids, regions, region);
+                    cellsi = split_region(cellsi, energy, centroids, regions, region);
                     repeat = 1;
                 end
             end
@@ -66,6 +77,9 @@ for i=1:x
         newimg(i, j, :) = normal(i, j);
         if cellsi(i, j)
             newimg(i, j, :) = [1 0 0];
+        end
+        if initial(i,j)
+            newimg(i,j,3) = 1;
         end
     end
 end
