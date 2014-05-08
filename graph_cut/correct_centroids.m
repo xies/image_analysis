@@ -25,6 +25,7 @@ while repeat
         % centroid_track keeps track of how many centroids fell into a single
         % region
         cellnum = regions(round(centroid(1)), round(centroid(2)));
+        %@TODO what if cellnum is 0? ie. centroid on border?
         centroid_track(cellnum) = centroid_track(cellnum) + 1;
         count = length(regions(regions == cellnum));
         % @TODO define background as the region with most centroids -

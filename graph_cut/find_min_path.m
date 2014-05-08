@@ -19,7 +19,7 @@ a = graythresh(weight); % Threshold
 weight = (weight .^ k) ./ ((weight .^ k) + (a ^ k));
 weight(isnan(weight)) = Inf;
 
-w = 4;
+w = 5;
 % Higher values care more about energy; lower values care more about distance.
 % Higher values are also much slower since more points need to be
 % investigated more times.
@@ -35,7 +35,7 @@ closedset = zeros(x, y);
 
 opensetarray = zeros(x, y);
 % This is a hack used so that we can use Java's PriorityQueue for faster
-% performance.
+% performance. Use Node object to keep track of pixel position and cost
 comparator = CostComparator(goal(1), goal(2), x, y);
 openset = PriorityQueue(11, comparator);
 openset.add( Node(intmap(start(1), start(2)), 0) );
@@ -55,6 +55,7 @@ neighbors = [0 1 0 -1 1 -1 1 -1
  
 % n=0;
 % Now, iterate until we reach our goal.
+% The control flow is awkward: while/return
 while ~openset.isEmpty()
     % Start with the lowest-cost point currently in our open set, since
     % this cannot possibly get smaller by expanding any of its neighbors,
@@ -124,6 +125,8 @@ while ~openset.isEmpty()
                 openset.remove( ...
                     Node( intmap(neighbor(1), neighbor(2)), ...
                     factor * weight(neighbor(1), neighbor(2)) ) );
+%                     factor * weight(current(1) ) );
+                    
                 tentative_is_better = 1;
             % Otherwise, we do not use the tentative g score.
             else
@@ -145,6 +148,8 @@ while ~openset.isEmpty()
                 openset.add(...
                     Node( intmap(neighbor(1), neighbor(2)), ...
                     factor * weight(neighbor(1),neighbor(2)) ) );
+%                 tentative_g_score) );
+
                 opensetarray(neighbor(1), neighbor(2)) = 1;
                 % Finally, save the g score.
                 g_score(neighbor(1), neighbor(2)) = tentative_g_score;
