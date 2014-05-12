@@ -13,4 +13,13 @@ public class Node {
 		this.index = index;
 		this.gscore = gscore;
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (other == null) {return false;}
+		if (this.getClass() != other.getClass()) {return false;}
+		if (this.index == ((Node)other).index ) {return true;}
+		return false;
+	}
+	
 }

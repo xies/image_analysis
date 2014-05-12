@@ -1,7 +1,7 @@
 function cellsi = split_region(cellsi, energy, centroids, regions, ID2split)
 
 region_mask = (regions == ID2split);
-figure, imshow(region_mask);
+% figure, imshow(region_mask);
 
 region_centroids = [];
 for centroid=centroids'
@@ -42,7 +42,7 @@ for i = 1:2
             cellsi(round(pt(1)), round(pt(2)) + 1) == 0 && ...
             cellsi(round(pt(1)) - 1, round(pt(2))) == 0 && ...
             cellsi(round(pt(1)), round(pt(2)) - 1) == 0
-%     while cellsi(round(pt(1)), round(pt(2))) == 0
+        
         pt = pt + vector;
     end
     intersect(i, :) = round(pt);
@@ -53,7 +53,8 @@ h = max(max(energy));
 l = min(min(energy));
 normalized_energy = 1.0 - ((energy - l) / (h - l));
 intmap = reshape(1:numel(energy),[size(energy,2), size(energy,1)])';
-path = find_min_path(normalized_energy, intmap, intersect(1, :), intersect(2, :));
+path = find_min_path( ...
+    normalized_energy, intmap, intersect(1, :), intersect(2, :));
 
 for point=path'
     cellsi(point(1), point(2)) = 1;

@@ -59,7 +59,7 @@ while repeat
             end
         end
     end
-    figure, imshow(cellsi - 0.75 * original);
+%     figure, imshow(cellsi - 0.75 * original);
 end
 
 cellsi = bwmorph(cellsi, 'shrink', Inf);

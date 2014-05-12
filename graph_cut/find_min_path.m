@@ -1,6 +1,18 @@
 function path = find_min_path(weight, intmap, start, goal)
-% Finds the minimum path (weighted by weight) from the start point to the
-% end point.
+%FIND_MIN_PATH  Finds the minimum path (weighted by weight) from the start
+% point to the end point. Implements the A* search algorithm.
+%
+% USAGE: path = find_min_path(weight,intmap,start,goal);
+%
+% INPUT: weight - the cost function minimized by path
+%        intmap - linearized index of the lattice
+%        start - indices (x,y) of the start
+%        goal - indices (x,y) of the goal
+%
+% Authors:
+% Charlie Gordon @ mit
+% xies@mit
+
 tic
 % Import some useful Java classes for faster computation time.
 import java.util.PriorityQueue;
@@ -19,7 +31,7 @@ a = graythresh(weight); % Threshold
 weight = (weight .^ k) ./ ((weight .^ k) + (a ^ k));
 weight(isnan(weight)) = Inf;
 
-w = 5;
+w = 10;
 % Higher values care more about energy; lower values care more about distance.
 % Higher values are also much slower since more points need to be
 % investigated more times.
@@ -27,11 +39,9 @@ w = 5;
 weight = w * weight;
 
 [x,y] = size(weight);
- 
 
 % Using A* search algorithm:
 closedset = zeros(x, y);
-
 
 opensetarray = zeros(x, y);
 % This is a hack used so that we can use Java's PriorityQueue for faster
@@ -53,9 +63,9 @@ g_score(start(1), start(2)) = 0;
 neighbors = [0 1 0 -1 1 -1 1 -1
              1 0 -1 0 1 1 -1 -1];
  
-% n=0;
 % Now, iterate until we reach our goal.
-% The control flow is awkward: while/return
+% xies: The control flow is awkward: while/return
+
 while ~openset.isEmpty()
     % Start with the lowest-cost point currently in our open set, since
     % this cannot possibly get smaller by expanding any of its neighbors,
@@ -72,9 +82,14 @@ while ~openset.isEmpty()
  
         path = [goal; current_node];
         % Retrace our steps and add them to the path.
-        while came_from_x(current_node(1), current_node(2)) && came_from_y(current_node(1), current_node(2))
-            current_node = [came_from_x(current_node(1), current_node(2)) came_from_y(current_node(1), current_node(2))];
+        while came_from_x(current_node(1), current_node(2)) ...
+                && came_from_y(current_node(1), current_node(2))
+            
+            current_node = [came_from_x(current_node(1), ...
+                current_node(2)) came_from_y(current_node(1), ...
+                current_node(2))];
             path = union(path, current_node, 'rows');
+            
         end
         % Now, we're done, so return.
         toc
@@ -118,15 +133,20 @@ while ~openset.isEmpty()
             % If it doesn't have a score yet, we use the tentative g
             % score.
             if ~opensetarray(neighbor(1), neighbor(2))
+%             if openset.contains( Node(intmap(neighbor(1),neighbor(2)),0 ) )
                 tentative_is_better = 1;
             % Also, if the score is better than the previous score, we
             % use the tentative g score.
             elseif tentative_g_score < g_score(neighbor(1), neighbor(2))
+                
+%                 before = openset.size;
                 openset.remove( ...
                     Node( intmap(neighbor(1), neighbor(2)), ...
-                    factor * weight(neighbor(1), neighbor(2)) ) );
-%                     factor * weight(current(1) ) );
-                    
+                    g_score( neighbor(1),neighbor(2) ) ) );
+%                 if before >= openset.size
+%                     keyboard;
+%                 end
+                
                 tentative_is_better = 1;
             % Otherwise, we do not use the tentative g score.
             else
@@ -147,9 +167,8 @@ while ~openset.isEmpty()
                 % PriorityQueue updates its ordering.
                 openset.add(...
                     Node( intmap(neighbor(1), neighbor(2)), ...
-                    factor * weight(neighbor(1),neighbor(2)) ) );
-%                 tentative_g_score) );
-
+                    tentative_g_score) );
+%                     factor * weight(neighbor(1),neighbor(2)) ) );
                 opensetarray(neighbor(1), neighbor(2)) = 1;
                 % Finally, save the g score.
                 g_score(neighbor(1), neighbor(2)) = tentative_g_score;
