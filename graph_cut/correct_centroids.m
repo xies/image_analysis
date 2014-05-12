@@ -1,12 +1,18 @@
 function cellsi = correct_centroids(cellsi, energy, centroids)
 % CORRECT_CENTROIDS Takes an undersegmented image and further segments it so
-%as to fit the cells to their centroids.
+% as to fit the cells to their centroids.
+% 
+% SYNOPSIS: outlines = correct_centroids(underseg, energy, centroids);
+%
+
+% get rid of NaN entries in centroids
+centroids = centroids(:,~isnan(centroids(1,:)));
 
 repeat = 1;
-
 initial = cellsi;
 
 while repeat
+    
     repeat = 0;
     cellsinv = ~cellsi;
     
@@ -71,7 +77,7 @@ h = max(max(energy));
 l = min(min(energy));
 normal = 1.0 - ((energy - l) / (h - l));
 
-[x y] = size(cellsi);
+[x,y] = size(cellsi);
 newimg = zeros(x, y, 3);
 for i=1:x
     for j=1:y
