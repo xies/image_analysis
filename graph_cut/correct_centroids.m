@@ -1,4 +1,4 @@
-function cellsi = correct_centroids(cellsi, energy, centroids)
+function [cellsi,regions] = correct_centroids(cellsi, energy, centroids)
 % CORRECT_CENTROIDS Takes an undersegmented image and further segments it so
 % as to fit the cells to their centroids.
 % 
@@ -11,14 +11,15 @@ centroids = centroids(:,~isnan(centroids(1,:)));
 repeat = 1;
 initial = cellsi;
 
+% whiteout = false(size(cellsi));
+
 while repeat
     
     repeat = 0;
-    cellsinv = ~cellsi;
     
     % regions keeps track of object label
-    regions = bwlabel(cellsinv, 4);
-    
+    regions = bwlabel(~cellsi, 4);
+
     % Keep track of which one is the "background."
     background = -1;
     background_count = 0;
@@ -43,15 +44,20 @@ while repeat
     end
     
     original = cellsi;
-    for region=unique(regions)'
+    for region = unique(regions)'
         if region > 0
+            
             n = centroid_track(region);
+            
             if n == 0
                 % Empty - need to remove cell.
                 % Trick: white-out the region, tn re-skeletonize later.
                 cellsi = cellsi + (regions == region);
+%                 whiteout = whiteout | regions == region;
+                
+                
             elseif n == 1
-                % Region is good, so do nothing.
+                % Region has only one centroid so do nothing.
             else
                 % Too many centroids! Split them.
                 if region == background
@@ -59,37 +65,58 @@ while repeat
                     % @TODO we need a way to deal with this.
                 else
                     % Split!
-                    cellsi = split_region(cellsi, energy, centroids, regions, region);
+                    try [cellsi,intersection] = split_region(cellsi, energy, centroids, regions, region);
+                    catch exception
+                        if strcmpi(exception.identifier,'split_region:GuidelineCollapse')
+                            repeat = 0;
+                            continue
+                        end
+                    end
                     repeat = 1;
+%                     figure, imshow(cellsi - 0.75 * original);
+%                     hold on
+%                     scatter(intersection(1,2),intersection(1,1),'r*')
+%                     scatter(intersection(2,2),intersection(2,1),'r*')
+%                     keyboard
                 end
             end
         end
     end
+    if all(all(original == cellsi)), keyboard; end
 %     figure, imshow(cellsi - 0.75 * original);
 end
+
+% idx2elim = unique(regions(whiteout));
+% [dirty,clean] = eliminate_region(regions,idx2elim,background-1);
+
+cellsi = bwperim(bwmorph(cellsi,'open')) | bwperim(cellsi);
 
 cellsi = bwmorph(cellsi, 'shrink', Inf);
 cellsi = bwmorph(cellsi, 'clean');
 
-figure, imshow(cellsi);
+regions = bwlabel(~cellsi,4);
 
-h = max(max(energy));
-l = min(min(energy));
-normal = 1.0 - ((energy - l) / (h - l));
+% figure, imshow(cellsi);
 
-[x,y] = size(cellsi);
-newimg = zeros(x, y, 3);
-for i=1:x
-    for j=1:y
-        newimg(i, j, :) = normal(i, j);
-        if cellsi(i, j)
-            newimg(i, j, :) = [1 0 0];
-        end
-        if initial(i,j)
-            newimg(i,j,3) = 1;
-        end
-    end
-end
-figure, imshow(newimg);
+% h = max(max(energy));
+% l = min(min(energy));
+% normal = 1.0 - ((energy - l) / (h - l));
+
+% [x,y] = size(cellsi);
+% newimg = zeros(x, y, 3);
+% for i=1:x
+%     for j=1:y
+%         newimg(i, j, :) = normal(i, j);
+%         if cellsi(i, j)
+%             newimg(i, j, :) = [1 0 0];
+%         end
+%         if initial(i,j)
+%             newimg(i,j,3) = 1;
+%         end
+%     end
+% end
+% figure, imshow(newimg);
+% hold on;
+% scatter(centroids(:,2),centroids(:,1),'r*');
 
 end

@@ -31,7 +31,7 @@ a = graythresh(weight); % Threshold
 weight = (weight .^ k) ./ ((weight .^ k) + (a ^ k));
 weight(isnan(weight)) = Inf;
 
-w = 10;
+w = 5;
 % Higher values care more about energy; lower values care more about distance.
 % Higher values are also much slower since more points need to be
 % investigated more times.
