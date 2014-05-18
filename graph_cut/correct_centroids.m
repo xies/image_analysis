@@ -28,11 +28,24 @@ while repeat
     
     % Go thorugh every given centroid and put each centroid in a region in
     % the initial labelled image
-    for centroid = centroids'
+    for i = 1:size(centroids,1)
+        
+        centroid = centroids(i,:);
+        
         % centroid_track keeps track of how many centroids fell into a single
         % region
-        cellnum = regions(round(centroid(1)), round(centroid(2)));
-        %@TODO what if cellnum is 0? ie. centroid on border?
+        cellnum = regions( round(centroid(1)), round(centroid(2)) );
+        
+        % edgecase when centroid is on top of a border
+        if cellnum == 0
+            while cellnum == 0
+                %@TODO what if cellnum is 0? ie. centroid on border?
+                % Try to move the centroid to left or right...?
+                centroids(i,:) = [ centroid(1)-1 centroid(2) ];
+                centroid = centroids(i,:);
+                cellnum = regions( round(centroid(1)), round(centroid(2)) );
+            end
+        end
         centroid_track(cellnum) = centroid_track(cellnum) + 1;
         count = length(regions(regions == cellnum));
         % @TODO define background as the region with most centroids -
@@ -82,14 +95,25 @@ while repeat
             end
         end
     end
-    if all(all(original == cellsi)), keyboard; end
+%     if all(all(original == cellsi)), keyboard; end
 %     figure, imshow(cellsi - 0.75 * original);
 end
 
 % idx2elim = unique(regions(whiteout));
 % [dirty,clean] = eliminate_region(regions,idx2elim,background-1);
 
-cellsi = bwperim(bwmorph(cellsi,'open')) | bwperim(cellsi);
+% perimeter = bwmorph(cellsi,'open');
+% filled = imfill(~bwmorph(cellsi,'open'),'holes');
+% holes = filled - ~perimeter;
+
+perimeter = bwmorph(cellsi,'open');
+perimeter = imfill(~perimeter,'holes');
+perimeter = bwperim(perimeter);
+
+cellsi = perimeter | bwperim(cellsi);
+
+% fill in interior holes
+% cellsi = imfill(~cellsi,'holes');
 
 cellsi = bwmorph(cellsi, 'shrink', Inf);
 cellsi = bwmorph(cellsi, 'clean');
